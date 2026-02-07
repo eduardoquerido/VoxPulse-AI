@@ -1,0 +1,45 @@
+# 🗳️ VoxPulse-AI: 2026 Political Sentiment Monitor
+
+**VoxPulse-AI** is an autonomous AI agent designed to capture and analyze voter sentiment in real-time. Powered by **Gemini 1.5 Flash**, it processes large volumes of social media data and news to identify electoral trends, toxicity spikes, and key campaign themes.
+
+---
+
+## 🎯 Project Overview
+In a polarized electoral landscape, understanding the "digital pulse" is crucial. This POC (Proof of Concept) demonstrates how autonomous agents can replace manual monitoring by browsing the web, synthesizing public opinion, and generating actionable insights for campaign coordinators or political analysts.
+
+## 🚀 Key Features
+* **Autonomous Web Research:** Scans the web for recent mentions of candidates, parties, or specific hashtags.
+* **Nuanced Sentiment Analysis:** Goes beyond "positive/negative" to detect emotions like hope, anger, or skepticism.
+* **Topic Modeling:** Automatically categorizes sentiments into pillars such as Economy, Healthcare, Security, and Education.
+* **Crisis Detection:** Identifies sudden surges in negative mentions, acting as an early warning system for PR teams.
+* **Zero-Cost Infrastructure:** Optimized to run entirely on Free Tier LLMs without compromising performance.
+
+## 🛠️ Tech Stack
+* **Language:** Python 3.10+
+* **LLM (The Brain):** [Google Gemini 1.5 Flash](https://aistudio.google.com/) (Free Tier)
+* **Agent Framework:** [CrewAI](https://www.crewai.com/) / LangChain
+* **Web Search:** [Tavily AI](https://tavily.com/) / Serper.dev (Optimized for LLMs)
+* **Dashboard:** Streamlit
+
+## 📋 Getting Started
+
+### Prerequisites
+* A Google AI Studio API Key.
+* A Search API Key (Tavily or Serper).
+
+### Installation
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/YOUR_USERNAME/VoxPulse-AI.git](https://github.com/YOUR_USERNAME/VoxPulse-AI.git)
+    cd VoxPulse-AI
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Environment Setup:**
+    Create a `.env` file in the root directory:
+    ```env
+    GOOGLE_API_KEY=your_gemini
