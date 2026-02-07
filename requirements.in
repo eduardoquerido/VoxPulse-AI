@@ -1,0 +1,15 @@
+crewai
+crewai-tools
+langchain-google-genai
+python-dotenv
+tavily-python
+streamlit
+pysqlite3-binary
+plotly
+pandas
+
+# Dev stuffs
+tox
+black
+isort
+pytest

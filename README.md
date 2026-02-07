@@ -28,18 +28,56 @@ In a polarized electoral landscape, understanding the "digital pulse" is crucial
 * A Search API Key (Tavily or Serper).
 
 ### Installation
-1.  **Clone the repository:**
+1. **Clone the repository:**
     ```bash
     git clone [https://github.com/YOUR_USERNAME/VoxPulse-AI.git](https://github.com/YOUR_USERNAME/VoxPulse-AI.git)
     cd VoxPulse-AI
     ```
 
-2.  **Install dependencies:**
+2. **Install dependencies:**
     ```bash
+    python3.11 -m venv venv
+    source venv/bin/activate
     pip install -r requirements.txt
     ```
 
-3.  **Environment Setup:**
+3. **Environment Setup:**
     Create a `.env` file in the root directory:
+    change env_example to .env
     ```env
-    GOOGLE_API_KEY=your_gemini
+    GOOGLE_API_KEY=your_google_studio_ai_api_key
+    TAVILY_API_KEY=your_tavily_api_key
+
+## 🔒 Security & Reproducibility
+This project uses `pip-tools` to ensure deterministic builds. 
+To regenerate the hashed dependencies, run:
+`pip-compile --generate-hashes --output-file=requirements.txt requirements.in`
+
+## 🛠️ Development Automation with Tox
+
+This project uses **[tox](https://tox.wiki/)** to automate environment management, code formatting, and testing.
+
+### Core Commands
+
+| Command | Description |
+| :--- | :--- |
+| `tox -l` | List all available environments. |
+| `tox -a` | List environments with detailed descriptions. |
+| `tox` | Run the full suite (formatting, linting, and tests). |
+| `tox -e format` | **Auto-fix** code style using `black` and `isort`. |
+| `tox -e checklint` | **Verify** code style and import sorting (checks only). |
+| `tox -e unittesting` | Run all unit tests in a clean Python 3.10 environment. |
+
+### Maintenance & Troubleshooting
+
+* **Rebuild environments:** Use this if you've updated dependencies or the `tox.ini` file.
+  ```bash
+  tox -r
+
+## 🚀 Running the Web Dashboard
+
+The **VoxPulse-AI** interface is built with Streamlit. Follow these steps to launch the dashboard locally:
+
+### 1. Standard Execution
+Run this command in your terminal while your virtual environment is active:
+`python3.11 -m streamlit run app.py`
