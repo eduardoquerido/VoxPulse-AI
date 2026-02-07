@@ -1,11 +1,13 @@
-# 🗳️ VoxPulse-AI: 2026 Political Sentiment Monitor
+# 🗳️ VoxPulse-AI: 2026 Brazil's Political Sentiment Monitor
 
-**VoxPulse-AI** is an autonomous AI agent designed to capture and analyze voter sentiment in real-time. Powered by **Gemini 1.5 Flash**, it processes large volumes of social media data and news to identify electoral trends, toxicity spikes, and key campaign themes.
+**VoxPulse-AI** is an autonomous AI agent designed to capture and analyze voter sentiment in real-time. Powered by **Gemini 2.5 Flash** and **Groq Cloud**, it processes large volumes of social media data and news to identify electoral trends, toxicity spikes, and key campaign themes.
 
 ---
 
 ## 🎯 Project Overview
-In a polarized electoral landscape, understanding the "digital pulse" is crucial. This POC (Proof of Concept) demonstrates how autonomous agents can replace manual monitoring by browsing the web, synthesizing public opinion, and generating actionable insights for campaign coordinators or political analysts.
+In a polarized electoral landscape, understanding the "digital pulse" is crucial. This project demonstrates how autonomous agents can replace manual monitoring by browsing the web, synthesizing public opinion, and generating actionable insights for campaign coordinators or political analysts.
+
+While currently focused on the Brazilian political landscape, it can be easily adapted to other scenarios with minimal effort.
 
 ## 🚀 Key Features
 * **Autonomous Web Research:** Scans the web for recent mentions of candidates, parties, or specific hashtags.
@@ -15,11 +17,17 @@ In a polarized electoral landscape, understanding the "digital pulse" is crucial
 * **Zero-Cost Infrastructure:** Optimized to run entirely on Free Tier LLMs without compromising performance.
 
 ## 🛠️ Tech Stack
-* **Language:** Python 3.10+
-* **LLM (The Brain):** [Google Gemini 1.5 Flash](https://aistudio.google.com/) (Free Tier)
+* **Language:** Python 3.11+
+* **LLM (The Brain):** [Google Gemini 2.5 Flash](https://aistudio.google.com/) (Free Tier)
+* **LLM (The Brain):** [Groq Cloud](https://console.groq.com/home) - Llama 3.3 70B Versatile.
+    * **Advantage:** Powered by LPU™ (Language Processing Unit) architecture, delivering significantly faster response times than Gemini (ultra-low latency), which is ideal for complex multi-agent workflows in CrewAI.
+    * **Cost:** Free Tier (usage-based limits on RPM and TPM).
+    * **Integration:** Implemented via `crewai.LLM` with native `litellm` support to ensure structured outputs and full compatibility with the LangChain ecosystem.
 * **Agent Framework:** [CrewAI](https://www.crewai.com/) / LangChain
 * **Web Search:** [Tavily AI](https://tavily.com/) / Serper.dev (Optimized for LLMs)
 * **Dashboard:** Streamlit
+
+*Note:* The project leverages Groq for agent orchestration due to its extreme inference speed, allowing political analyses to be completed in a fraction of the time compared to traditional cloud providers.
 
 ## 📋 Getting Started
 
@@ -30,7 +38,7 @@ In a polarized electoral landscape, understanding the "digital pulse" is crucial
 ### Installation
 1. **Clone the repository:**
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/VoxPulse-AI.git](https://github.com/YOUR_USERNAME/VoxPulse-AI.git)
+    git clone https://github.com/eduardoquerido/VoxPulse-AIAgent.git
     cd VoxPulse-AI
     ```
 
@@ -42,10 +50,10 @@ In a polarized electoral landscape, understanding the "digital pulse" is crucial
     ```
 
 3. **Environment Setup:**
-    Create a `.env` file in the root directory:
-    change env_example to .env
+    Create a `.env` file in the root directory or change env_example to .env
     ```env
     GOOGLE_API_KEY=your_google_studio_ai_api_key
+    GROQ_API_KEY=your_groq_api_key_here
     TAVILY_API_KEY=your_tavily_api_key
 
 ## 🔒 Security & Reproducibility
