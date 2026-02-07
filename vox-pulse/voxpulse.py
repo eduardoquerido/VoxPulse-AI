@@ -1,12 +1,13 @@
 import os
 
-from crewai import Agent, Crew, Process, Task, LLM
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import TavilySearchTool
 from dotenv import load_dotenv
+from models.models import ComparisonOutput
+
 # from langchain_google_genai import ChatGoogleGenerativeAI
 
-from models.models import ComparisonOutput
 
 load_dotenv()
 
@@ -23,10 +24,10 @@ class VoxPulseCrew:
         #     temperature=0.3,  # low value to avoid hallucination
         #     google_api_key=os.getenv("GOOGLE_API_KEY"),
         # )
-        self.llm = LLM(    
+        self.llm = LLM(
             model="groq/llama-3.3-70b-versatile",
             api_key=os.getenv("GROQ_API_KEY"),
-            temperature=0.3
+            temperature=0.3,
         )
         # Search Tool
         self.search_tool = TavilySearchTool()
@@ -77,11 +78,11 @@ class VoxPulseCrew:
     @task
     def comparison_task(self) -> Task:
         return Task(
-            description='Analyze and compare the following politicians: {politicians_list}.',
-            expected_output='A structured JSON object with sentiment and trust metrics for each name.',
+            description="Analyze and compare the following politicians: {politicians_list}.",
+            expected_output="A structured JSON object with sentiment and trust metrics for each name.",
             output_json=ComparisonOutput,
-            agent=self.analyst()
-        )   
+            agent=self.analyst(),
+        )
 
     @crew
     def crew(self) -> Crew:
@@ -92,17 +93,21 @@ class VoxPulseCrew:
             process=Process.sequential,
             verbose=True,
             max_rpm=3,
-            allow_delegation=False
+            allow_delegation=False,
         )
 
 
 def run_analysis(main_politician: str, all_politicians: str, target_lang: str):
-    crew_output = VoxPulseCrew().crew().kickoff(
-        inputs={
-            'politician': main_politician,
-            'politicians_list': all_politicians,
-            'language': target_lang
-        }
+    crew_output = (
+        VoxPulseCrew()
+        .crew()
+        .kickoff(
+            inputs={
+                "politician": main_politician,
+                "politicians_list": all_politicians,
+                "language": target_lang,
+            }
+        )
     )
 
     return crew_output
