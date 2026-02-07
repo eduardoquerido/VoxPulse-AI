@@ -1,12 +1,15 @@
 crewai
 crewai-tools
-langchain-google-genai
+#langchain-google-genai
+langchain-groq
 python-dotenv
 tavily-python
 streamlit
 pysqlite3-binary
 plotly
 pandas
+litellm[proxy]
+instructor
 
 # Dev stuffs
 tox

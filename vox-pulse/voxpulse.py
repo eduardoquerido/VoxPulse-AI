@@ -1,10 +1,10 @@
 import os
 
-from crewai import Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import TavilySearchTool
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+# from langchain_google_genai import ChatGoogleGenerativeAI
 
 from models.models import ComparisonOutput
 
@@ -17,11 +17,16 @@ class VoxPulseCrew:
 
     def __init__(self) -> None:
         # Configuration for the LLM
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            verbose=True,
-            temperature=0.3,  # low value to avoid hallucination
-            google_api_key=os.getenv("GOOGLE_API_KEY"),
+        # self.llm = ChatGoogleGenerativeAI(
+        #     model="gemini-2.5-flash",
+        #     verbose=True,
+        #     temperature=0.3,  # low value to avoid hallucination
+        #     google_api_key=os.getenv("GOOGLE_API_KEY"),
+        # )
+        self.llm = LLM(    
+            model="groq/llama-3.3-70b-versatile",
+            api_key=os.getenv("GROQ_API_KEY"),
+            temperature=0.3
         )
         # Search Tool
         self.search_tool = TavilySearchTool()
@@ -74,7 +79,7 @@ class VoxPulseCrew:
         return Task(
             description='Analyze and compare the following politicians: {politicians_list}.',
             expected_output='A structured JSON object with sentiment and trust metrics for each name.',
-            output_json=ComparisonOutput, # <--- CrewAI uses the model to force JSON format
+            output_json=ComparisonOutput,
             agent=self.analyst()
         )   
 
@@ -82,14 +87,22 @@ class VoxPulseCrew:
     def crew(self) -> Crew:
         """Creates the VoxPulse-AI crew"""
         return Crew(
-            agents=self.agents,  # Automatically collected by @agent decorators
-            tasks=self.tasks,  # Automatically collected by @task decorators
+            agents=self.agents,
+            tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
+            max_rpm=3,
+            allow_delegation=False
         )
 
 
-def run_analysis(politician_name: str, target_lang: str):
-    return VoxPulseCrew().crew().kickoff(
-        inputs={'politician': politician_name, 'language': target_lang}
+def run_analysis(main_politician: str, all_politicians: str, target_lang: str):
+    crew_output = VoxPulseCrew().crew().kickoff(
+        inputs={
+            'politician': main_politician,
+            'politicians_list': all_politicians,
+            'language': target_lang
+        }
     )
+
+    return crew_output

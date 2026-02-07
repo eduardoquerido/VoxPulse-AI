@@ -1,107 +1,180 @@
-# --- Monkey Patch --- #
 import sys
+import os
+import datetime
+import pandas as pd
+import plotly.express as px
+import streamlit as st
 
+# --- Monkey Patch & Environment ---
 try:
     import sqlite3
-
     import pysqlite3
-
     if sqlite3.sqlite_version_info < (3, 35, 0):
         sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
         print("SQLite3 patched successfully with pysqlite3-binary")
 except ImportError:
     print("DEBUG: pysqlite3 not found in sys.path. Still using system sqlite3.")
 
-# --- CrewAI Telemetry --- #
-import os
-
 os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
 
-import datetime
-
-import streamlit as st
+# --- Import your Crew logic ---
 from voxpulse import run_analysis
+
+# --- Translation Dictionary ---
+LANG_MAP = {
+    "Portuguese-BR": {
+        "sidebar_settings": "Configurações",
+        "lang_label": "Idioma:",
+        "main_input_label": "Nome do Político Principal:",
+        "comp_input_label": "Adicionar Competidores para Comparação:",
+        "btn_analyze": "Analisar Pulso Digital",
+        "exec_summary": "📋 Resumo Executivo",
+        "graph_section": "📊 Comparação de Métricas",
+        "radar_title": "Perfil Multidimensional",
+        "metrics": {
+            "sentiment_score": "Sentimento",
+            "economic_trust": "Confiança Econômica",
+            "digital_presence": "Presença Digital",
+            "social_approval": "Aprovação Social"
+        }
+    },
+    "English": {
+        "sidebar_settings": "Settings",
+        "lang_label": "Language:",
+        "main_input_label": "Main Politician Name:",
+        "comp_input_label": "Add Competitors for Comparison:",
+        "btn_analyze": "Analyze Digital Pulse",
+        "exec_summary": "📋 Executive Summary",
+        "graph_section": "📊 Metric Comparison",
+        "radar_title": "Multidimensional Profile",
+        "metrics": {
+            "sentiment_score": "Sentiment",
+            "economic_trust": "Economic Trust",
+            "digital_presence": "Digital Presence",
+            "social_approval": "Social Approval"
+        }
+    }
+}
 
 st.set_page_config(page_title="VoxPulse-AI", page_icon="🗳️", layout="wide")
 
-st.title("🗳️ VoxPulse-AI")
-st.markdown("""
-    **Autonomous Political Sentiment Analysis Engine** Monitor the 2026 electoral digital pulse using Gemini 1.5 Flash and Multi-Agent Systems.
-""")
+if "analysis_data" not in st.session_state:
+    st.session_state.analysis_data = None
 
 with st.sidebar:
-    st.header("Settings")
-    st.info("Currently running on Gemini 2.5 Flash (Free Tier)")
+    st.header("⚙️ Settings")
+    language = st.selectbox("Language / Idioma", options=["Portuguese-BR", "English"])
+    t = LANG_MAP[language]
+    
     st.divider()
-    st.write(f"**Date:** {datetime.date.today()}")
-
-if "analysis_result" not in st.session_state:
-    st.session_state.analysis_result = None
-
-
-# --- Sidebar ---
-with st.sidebar:
-    st.header("Settings")
-    # Language Selection
-    language = st.selectbox(
-        "Preferred Language / Idioma:",
-        options=["Portuguese-BR", "English"],
-        index=0  # Default to Portuguese
+    st.subheader(t["comp_input_label"])
+    # Let users choose or type new competitors
+    competitors = st.multiselect(
+        "Competitors:",
+        options=["Lula", "Flávio Bolsonaro", "Tarcísio de Freitas", "Ciro Gomes", "Romeu Zema"],
+        default=[]
     )
-    st.divider()
+    st.info("The main politician will automatically be included in the graphs.")
+
+st.title("🗳️ VoxPulse-AI")
+st.markdown(f"**Data:** {datetime.date.today()}")
+
+politician = st.text_input(t["main_input_label"], placeholder="e.g., President of Brazil")
 
 
-politician = st.text_input(
-    "Enter the name of a politician or public figure:",
-    placeholder="e.g., President of Brazil, Governor of São Paulo...",
-)
+# --- Analysis --- #
+# 1 hour cache for Free APIs
+@st.cache_data(show_spinner=False, ttl=3600)
+def get_cached_analysis(politician_name, competitors_list, lang):
+    """
+    Função intermediária para cachear os resultados do CrewAI.
+    """
+    # Junta os nomes para a lista de comparação
+    all_names_str = ", ".join([politician_name] + competitors_list)
+    
+    # Chama sua função original do voxpulse.py
+    results = run_analysis(politician_name, all_names_str, lang)
+    
+    # Extrai o texto do relatório (tentando pegar da tarefa de análise)
+    try:
+        # Se houver múltiplas tarefas, pegamos o texto da segunda (índice 1)
+        report_text = results.tasks_output[1].raw if len(results.tasks_output) > 1 else results.raw
+    except:
+        report_text = results.raw
 
-# --- Analysis Logic ---
-if st.button("Analyze Digital Pulse"):
+    # Retorna um dicionário serializável para o cache
+    return {
+        "raw_report": report_text,
+        "graph_json": results.json_dict,
+        "main_politician": politician_name
+    }
+
+
+if st.button(t["btn_analyze"]):
     if not politician:
-        st.warning("Please enter a name to start the analysis.")
+        st.warning("Please enter a name of a politician.")
     else:
-        with st.status(
-            f"Agents are working on {politician}...", expanded=True
-        ) as status:
+        with st.status(f"Analyzing {politician}...", expanded=True) as status:
             try:
-                st.write("🔍 Searching for recent news...")
-                results = run_analysis(politician, language)
-                st.session_state.analysis_result = results.raw
-
-                status.update(
-                    label="Analysis Complete!", state="complete", expanded=False
-                )
-
-                col1, col2 = st.columns([2, 1])
-
-                with col1:
-                    st.subheader("📋 Executive Summary")
-                    st.markdown(results.raw)  # CrewAI result object
-
-                with col2:
-                    st.subheader("📊 Metadata")
-                    st.json(
-                        {
-                            "Model": "Gemini 2.5 Flash",
-                            "Agents": ["Researcher", "Analyst"],
-                            "Timestamp": str(datetime.datetime.now()),
-                        }
-                    )
-
+                
+                cached_data = get_cached_analysis(politician, competitors, language)
+                
+                st.session_state.analysis_data = cached_data
+                
+                status.update(label="Analysis Complete (from cache)!" if st.session_state.analysis_data else "Analysis Complete!", 
+                              state="complete", expanded=False)
             except Exception as e:
-                st.error(f"An error occurred: {e}")
-                status.update(label="Analysis Failed", state="error")
+                st.error(f"Error: {e}")
 
-if st.session_state.analysis_result:
+# --- Display Results ---
+if st.session_state.analysis_data:
+    data = st.session_state.analysis_data
+    
     st.divider()
-    st.subheader(f"📊 Results for {politician}")
+    
+    col_text, col_graphs = st.columns([1.2, 1])
+    
+    with col_text:
+        st.subheader(f"{t['exec_summary']} - {data['main_politician']}")
+        st.markdown(data["raw_report"])
+        
+        if st.button("Limpar Resultados" if language == "Portuguese-BR" else "Clear Results"):
+            st.session_state.analysis_data = None
+            st.rerun()
+    
+    with col_graphs:
+        st.subheader(t["graph_section"])
+        
+        if "results" in data["graph_json"]:
+            df = pd.DataFrame(data["graph_json"]["results"])
 
-    st.markdown(st.session_state.analysis_result)
-
-    if st.button("Clear Results"):
-        st.session_state.analysis_result = None
-        st.rerun()
+            fig_bar = px.bar(
+                df, x='name', y='sentiment_score', 
+                color='name', 
+                title=t["metrics"]["sentiment_score"],
+                labels={'sentiment_score': t["metrics"]["sentiment_score"], 'name': 'Politician'},
+                template="plotly_dark"
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+            
+            st.divider()
+            
+            df_radar = df.rename(columns=t["metrics"])
+            metrics_cols = list(t["metrics"].values())
+            
+            sentiment_label = t["metrics"]["sentiment_score"]
+            if sentiment_label in metrics_cols:
+                metrics_cols.remove(sentiment_label)
+            
+            df_melted = df_radar.melt(id_vars=['name'], value_vars=metrics_cols, var_name='Metric', value_name='Value')
+            
+            fig_radar = px.line_polar(
+                df_melted, r='Value', theta='Metric', color='name',
+                line_close=True, range_r=[0, 100],
+                title=t["radar_title"],
+                template="plotly_dark"
+            )
+            st.plotly_chart(fig_radar, use_container_width=True)
 
 st.divider()
 st.caption("VoxPulse-AI POC - Developed for the 2026 Election Portfolio.")
