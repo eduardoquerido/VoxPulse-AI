@@ -20,6 +20,12 @@ class PoliticianMetrics(BaseModel):
     social_approval: int = Field(
         ..., ge=0, le=100, description="General approval rating on social issues"
     )
+    public_security: int = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Perception of effectiveness in crime fighting, police management, and public order policies",
+    )
 
 
 class ComparisonOutput(BaseModel):

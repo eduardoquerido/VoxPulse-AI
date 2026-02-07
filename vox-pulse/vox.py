@@ -1,12 +1,8 @@
-import datetime
-import os
 import sys
+import os
+from dotenv import load_dotenv
 
-import pandas as pd
-import plotly.express as px
-import streamlit as st
-
-from voxpulse import run_analysis
+load_dotenv()
 
 try:
     import sqlite3
@@ -19,7 +15,14 @@ try:
 except ImportError:
     print("DEBUG: pysqlite3 not found in sys.path. Still using system sqlite3.")
 
+import datetime
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from voxpulse import run_analysis
+
 os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
+os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 LANG_MAP = {
     "Português-BR": {
@@ -36,6 +39,7 @@ LANG_MAP = {
             "economic_trust": "Confiança Econômica",
             "digital_presence": "Presença Digital",
             "social_approval": "Aprovação Social",
+            "public_security": "Segurança Pública",
         },
     },
     "English": {
@@ -52,6 +56,7 @@ LANG_MAP = {
             "economic_trust": "Economic Trust",
             "digital_presence": "Digital Presence",
             "social_approval": "Social Approval",
+            "public_security": "Public Security",
         },
     },
 }
@@ -63,7 +68,7 @@ if "analysis_data" not in st.session_state:
 
 with st.sidebar:
     st.header("⚙️ Settings")
-    language = st.selectbox("Language / Idioma", options=["Portuguese-BR", "English"])
+    language = st.selectbox("Language / Idioma", options=["Português-BR", "English"])
     t = LANG_MAP[language]
 
     st.divider()
@@ -99,18 +104,22 @@ politician = st.text_input(
 # 1 hour cache for Free APIs
 @st.cache_data(show_spinner=False, ttl=3600)
 def get_cached_analysis(politician_name, candidates_list, lang):
-    """
-    Função intermediária para cachear os resultados do CrewAI.
-    """
-    # Junta os nomes para a lista de comparação
     all_names_str = ", ".join([politician_name] + candidates_list)
-
-    # Chama sua função original do voxpulse.py
     results = run_analysis(politician_name, all_names_str, lang)
 
-    # Extrai o texto do relatório (tentando pegar da tarefa de análise)
+    graph_data = None
     try:
-        # Se houver múltiplas tarefas, pegamos o texto da segunda (índice 1)
+        if results.json_dict:
+            graph_data = results.json_dict
+        else:
+            for task_output in reversed(results.tasks_output):
+                if task_output.json_dict:
+                    graph_data = task_output.json_dict
+                    break
+    except Exception as e:
+        print(f"Error while extraxting JSON {e}")
+    
+    try:
         report_text = (
             results.tasks_output[1].raw
             if len(results.tasks_output) > 1
@@ -119,10 +128,9 @@ def get_cached_analysis(politician_name, candidates_list, lang):
     except:
         report_text = results.raw
 
-    # Retorna um dicionário serializável para o cache
     return {
         "raw_report": report_text,
-        "graph_json": results.json_dict,
+        "graph_json": graph_data,
         "main_politician": politician_name,
     }
 
@@ -171,7 +179,7 @@ if st.session_state.analysis_data:
     with col_graphs:
         st.subheader(t["graph_section"])
 
-        if "results" in data["graph_json"]:
+        if data.get("graph_json") and "results" in data["graph_json"]:
             df = pd.DataFrame(data["graph_json"]["results"])
 
             fig_bar = px.bar(
@@ -215,6 +223,10 @@ if st.session_state.analysis_data:
                 template="plotly_dark",
             )
             st.plotly_chart(fig_radar, use_container_width=True)
+        else:
+            st.warning("Structured data for charts was not generated in this analysis. The textual report is available on the side.")
+            if st.checkbox("See technical errors"):
+                st.write(data.get("graph_json"))
 
 st.divider()
 st.caption("VoxPulse-AI POC - Developed for the 2026 Election Portfolio.")

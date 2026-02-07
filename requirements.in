@@ -1,17 +1,17 @@
-crewai
-crewai-tools
-#langchain-google-genai
-langchain-groq
+streamlit
+crewai[tools]
+litellm==1.73.0
+pandas
+plotly
 python-dotenv
 tavily-python
-streamlit
-pysqlite3-binary
-plotly
-pandas
-litellm[proxy]
 instructor
+pysqlite3-binary
 
-# Dev stuffs
+# Optional for Gemini only
+# langchain-google-genai  # Se você decidir voltar para o Gemini no futuro
+
+# Dev
 tox
 black
 isort
